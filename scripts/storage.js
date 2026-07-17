@@ -1,35 +1,131 @@
-// ===============================
-// storage.js
-// ===============================
+/**
+ * ==========================================================
+ * File: storage.js
+ * Course: CSE 310 - Applied Programming
+ * Project: Personal Expense Tracker
+ *
+ * Description:
+ * This module handles all interactions with the browser's
+ * Local Storage. It is responsible for saving and loading
+ * expense data so that user information persists between
+ * browser sessions.
+ *
+ * Features:
+ * • Save expenses
+ * • Load expenses
+ * • Clear stored data
+ * • Error handling
+ * ==========================================================
+ */
 
-const STORAGE_KEY = "expenseTracker";
+"use strict";
 
 /**
- * Save expenses.
+ * Local Storage key used by the application.
+ * Changing this value changes where data is stored.
+ */
+const STORAGE_KEY = "personalExpenseTracker";
+
+
+/**
+ * Saves the expense collection to Local Storage.
+ *
+ * @param {Array} expenses - Array of Expense objects.
+ *
+ * @throws {Error} If saving to Local Storage fails.
  */
 export function saveExpenses(expenses) {
 
-    localStorage.setItem(
+    try {
 
-        STORAGE_KEY,
+        const jsonData = JSON.stringify(expenses);
 
-        JSON.stringify(expenses)
+        localStorage.setItem(STORAGE_KEY, jsonData);
 
-    );
+    }
+
+    catch (error) {
+
+        throw new Error(
+            "Unable to save expense data."
+        );
+
+    }
 
 }
 
+
 /**
- * Load expenses.
+ * Loads all expenses from Local Storage.
+ *
+ * @returns {Array} Array of stored expenses.
+ *
+ * @throws {Error} If stored data cannot be read.
  */
 export function loadExpenses() {
 
-    const data = localStorage.getItem(STORAGE_KEY);
+    try {
 
-    if (!data)
+        const storedData = localStorage.getItem(STORAGE_KEY);
 
-        return [];
+        // No saved data yet.
+        if (storedData === null) {
 
-    return JSON.parse(data);
+            return [];
+
+        }
+
+        return JSON.parse(storedData);
+
+    }
+
+    catch (error) {
+
+        throw new Error(
+            "Unable to load saved expense data."
+        );
+
+    }
+
+}
+
+
+/**
+ * Removes all stored expenses.
+ *
+ * Useful if a future "Reset Data" feature
+ * is added to the application.
+ */
+export function clearExpenses() {
+
+    try {
+
+        localStorage.removeItem(STORAGE_KEY);
+
+    }
+
+    catch (error) {
+
+        throw new Error(
+            "Unable to clear saved expense data."
+        );
+
+    }
+
+}
+
+
+/**
+ * Checks whether Local Storage currently
+ * contains any saved expenses.
+ *
+ * @returns {boolean}
+ *
+ * Demonstrates a simple utility function that
+ * can be used when initializing the application.
+ */
+export function hasStoredExpenses() {
+
+    return localStorage.getItem(STORAGE_KEY) !== null;
 
 }
