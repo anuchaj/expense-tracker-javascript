@@ -176,3 +176,25 @@ export function sortExpenses(type) {
     }
 
 }
+
+
+/**
+ * Determines whether at least one expense
+ * belongs to the supplied category.
+ *
+ * Demonstrates ES6 some().
+ *
+ * @param {string} category
+ * @returns {boolean}
+ */
+export function hasExpenses(category) {
+
+    return expenses.some(
+
+        expense =>
+
+            expense.category === category
+
+    );
+
+}

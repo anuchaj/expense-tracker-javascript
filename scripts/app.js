@@ -1,11 +1,4 @@
-import {
-
-    addExpense,
-
-    deleteExpense
-
-} from "./expenses.js";
-
+import { addExpense, deleteExpense } from "./expenses.js";
 
 import {
 
@@ -22,17 +15,15 @@ import {
 } from "./ui.js";
 
 
-import {
+import { loadExpenses } from "./storage.js";
 
-    loadExpenses
+import { setExpenses } from "./expenses.js";
 
-} from "./storage.js";
+import { flattenCategories } from "./recursion.js";
 
-import {
+import { initializeChart, updateChart } from "./charts.js";
 
-    setExpenses
-
-} from "./expenses.js";
+import { getExpenses } from "./expenses.js";
 
 
 const form = document.querySelector("#expenseForm");
@@ -128,8 +119,45 @@ function validateExpense(
 
 }
 
-setExpenses(loadExpenses());
+/**
+ * Populates both category dropdowns.
+ * Categories are generated recursively.
+ */
+function populateCategories() {
+
+    const categorySelect =
+        document.querySelector("#category");
+
+    const filterSelect =
+        document.querySelector("#filterCategory");
+
+    const categories =
+        flattenCategories();
+
+    categorySelect.innerHTML = "";
+
+    filterSelect.innerHTML =
+        `<option value="all">All Categories</option>`;
+
+    categories.forEach(category => {
+
+        categorySelect.innerHTML +=
+            `<option>${category}</option>`;
+
+        filterSelect.innerHTML +=
+            `<option>${category}</option>`;
+
+    });
+
+}
+
+// setExpenses(loadExpenses());
+// populateCategories();
+
+initializeChart();
 
 renderExpenses(handleDelete);
 
 updateSummary();
+
+updateChart(getExpenses());
