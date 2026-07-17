@@ -6,6 +6,7 @@ import {
 
 } from "./expenses.js";
 
+
 import {
 
     renderExpenses,
@@ -14,9 +15,25 @@ import {
 
     clearForm,
 
-    showError
+    showError,
+
+    showSuccess
 
 } from "./ui.js";
+
+
+import {
+
+    loadExpenses
+
+} from "./storage.js";
+
+import {
+
+    setExpenses
+
+} from "./expenses.js";
+
 
 const form = document.querySelector("#expenseForm");
 
@@ -51,6 +68,10 @@ form.addEventListener("submit", event => {
             date
         );
 
+        showSuccess("Expense added successfully.");
+
+        setExpenses(loadExpenses());
+
         renderExpenses(handleDelete);
 
         updateSummary();
@@ -70,6 +91,8 @@ form.addEventListener("submit", event => {
 function handleDelete(id) {
 
     deleteExpense(id);
+
+    setExpenses(loadExpenses());
 
     renderExpenses(handleDelete);
 
@@ -104,6 +127,8 @@ function validateExpense(
         );
 
 }
+
+setExpenses(loadExpenses());
 
 renderExpenses(handleDelete);
 

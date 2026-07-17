@@ -3,6 +3,12 @@
 // Handles expense data and CRUD operations
 // ===========================================
 
+import {
+
+saveExpenses
+
+} from "./storage.js";
+
 let expenses = [];
 
 /**
@@ -31,6 +37,7 @@ export function addExpense(title, amount, category, date) {
     };
 
     expenses.push(expense);
+    saveExpenses(expenses);
 
     return expense;
 }
@@ -42,6 +49,7 @@ export function addExpense(title, amount, category, date) {
 export function deleteExpense(id) {
 
     expenses = expenses.filter(expense => expense.id !== id);
+    saveExpenses(expenses);
 
 }
 
@@ -101,5 +109,70 @@ export function getExpenseCount() {
 export function setExpenses(data) {
 
     expenses = data;
+
+}
+
+
+export function filterExpenses(category) {
+
+    if (category === "all")
+
+        return expenses;
+
+    return expenses.filter(
+
+        expense => expense.category === category
+
+    );
+
+}
+
+export function sortExpenses(type) {
+
+    switch(type){
+
+        case "low":
+
+            expenses.sort(
+
+                (a,b)=>a.amount-b.amount
+
+            );
+
+            break;
+
+        case "high":
+
+            expenses.sort(
+
+                (a,b)=>b.amount-a.amount
+
+            );
+
+            break;
+
+        case "alpha":
+
+            expenses.sort(
+
+                (a,b)=>
+
+                    a.title.localeCompare(b.title)
+
+            );
+
+            break;
+
+        default:
+
+            expenses.sort(
+
+                (a,b)=>
+
+                    new Date(b.date)-new Date(a.date)
+
+            );
+
+    }
 
 }

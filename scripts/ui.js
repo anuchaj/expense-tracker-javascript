@@ -110,6 +110,32 @@ export function clearForm() {
  */
 export function showError(message) {
 
-    alert(message);
+    const box = document.querySelector("#messageBox");
+
+    box.className = "message error";
+
+    box.textContent = message;
+
+    setTimeout(() => {
+
+        box.className = "message hidden";
+
+    }, 3000);
+
+}
+
+export function showSuccess(message) {
+
+    const box = document.querySelector("#messageBox");
+
+    box.className = "message success";
+
+    box.textContent = message;
+
+    setTimeout(() => {
+
+        box.className = "message hidden";
+
+    }, 2000);
 
 }
