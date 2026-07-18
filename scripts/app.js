@@ -1,4 +1,43 @@
-import { addExpense, deleteExpense } from "./expenses.js";
+"use strict";
+
+
+/*
+    Main Application Controller
+
+    Responsibilities:
+
+    - Initialize the application.
+    - Connect all modules.
+    - Handle user events.
+    - Coordinate data flow.
+
+*/
+
+
+import { ExpenseManager } from "./expenses.js";
+
+import {
+
+    loadExpenses
+
+} from "./storage.js";
+
+
+import {
+
+    flattenCategories
+
+} from "./recursion.js";
+
+
+import {
+
+    initializeChart,
+
+    updateChart
+
+} from "./charts.js";
+
 
 import {
 
@@ -6,158 +45,546 @@ import {
 
     updateSummary,
 
-    clearForm,
+    populateCategories,
 
-    showError,
+    showMessage,
 
-    showSuccess
+    clearForm
 
 } from "./ui.js";
 
 
-import { loadExpenses } from "./storage.js";
-
-import { setExpenses } from "./expenses.js";
-
-import { flattenCategories } from "./recursion.js";
-
-import { initializeChart, updateChart } from "./charts.js";
-
-import { getExpenses } from "./expenses.js";
 
 
-const form = document.querySelector("#expenseForm");
+// -------------------------------------
+// Create the expense manager instance.
+// This object manages application state.
+// -------------------------------------
 
-form.addEventListener("submit", event => {
+const expenseManager = new ExpenseManager();
 
-    event.preventDefault();
 
-    const title =
-        document.querySelector("#title").value.trim();
 
-    const amount =
-        Number(document.querySelector("#amount").value);
 
-    const category =
-        document.querySelector("#category").value;
 
-    const date =
-        document.querySelector("#date").value;
+/**
+ * Initializes the application.
+ */
+function initializeApp() {
+
 
     try {
 
-        validateExpense(
-            title,
-            amount,
-            date
+
+        // ---------------------------------
+        // Load saved expenses.
+        // ---------------------------------
+
+        const savedExpenses =
+            loadExpenses();
+
+
+
+        expenseManager.setExpenses(
+            savedExpenses
         );
 
-        addExpense(
+
+
+        // ---------------------------------
+        // Load categories dynamically.
+        // Uses recursion.js.
+        // ---------------------------------
+
+        const categories =
+            flattenCategories();
+
+
+
+        populateCategories(
+            categories
+        );
+
+
+
+        // ---------------------------------
+        // Initialize Chart.js.
+        // ---------------------------------
+
+        initializeChart();
+
+
+
+        refreshApplication();
+
+
+
+        setupEventListeners();
+
+
+
+    }
+
+
+    catch(error) {
+
+
+        showMessage(
+
+            error.message,
+
+            "error"
+
+        );
+
+
+    }
+
+
+}
+
+
+
+
+
+
+/**
+ * Refreshes all visible application data.
+ *
+ * Called after every data change.
+ */
+function refreshApplication() {
+
+
+    const expenses =
+        expenseManager.getExpenses();
+
+
+
+    renderExpenses(
+        expenses
+    );
+
+
+    updateSummary(
+        expenseManager
+    );
+
+
+    updateChart(
+        expenses
+    );
+
+
+}
+
+
+
+
+
+
+
+/**
+ * Handles adding a new expense.
+ */
+function handleExpenseSubmit(event) {
+
+
+    event.preventDefault();
+
+
+
+    try {
+
+
+
+        const title =
+            document.querySelector("#title")
+                .value
+                .trim();
+
+
+
+        const amount =
+            Number(
+                document.querySelector("#amount")
+                    .value
+            );
+
+
+
+        const category =
+            document.querySelector("#category")
+                .value;
+
+
+
+        const date =
+            document.querySelector("#date")
+                .value;
+
+
+
+
+        // -----------------------------
+        // Basic validation.
+        // -----------------------------
+
+        if (!title) {
+
+
+            throw new Error(
+                "Please enter an expense name."
+            );
+
+
+        }
+
+
+
+        if (
+
+            Number.isNaN(amount) ||
+
+            amount <= 0
+
+        ) {
+
+
+            throw new Error(
+                "Please enter a valid amount."
+            );
+
+
+        }
+
+
+
+        if (!date) {
+
+
+            throw new Error(
+                "Please select a date."
+            );
+
+
+        }
+
+
+
+        expenseManager.addExpense(
+
             title,
+
             amount,
+
             category,
+
             date
+
         );
 
-        showSuccess("Expense added successfully.");
 
-        setExpenses(loadExpenses());
 
-        renderExpenses(handleDelete);
+        refreshApplication();
 
-        updateSummary();
+
 
         clearForm();
 
+
+
+        showMessage(
+
+            "Expense added successfully.",
+
+            "success"
+
+        );
+
+
+
     }
 
-    catch (error) {
 
-        showError(error.message);
+    catch(error) {
+
+
+        showMessage(
+
+            error.message,
+
+            "error"
+
+        );
+
 
     }
 
-});
-
-function handleDelete(id) {
-
-    deleteExpense(id);
-
-    setExpenses(loadExpenses());
-
-    renderExpenses(handleDelete);
-
-    updateSummary();
 
 }
 
-function validateExpense(
-    title,
-    amount,
-    date
-) {
 
-    if (title.length === 0)
-        throw new Error(
-            "Expense title cannot be empty."
-        );
 
-    if (Number.isNaN(amount))
-        throw new Error(
-            "Amount must be numeric."
-        );
 
-    if (amount <= 0)
-        throw new Error(
-            "Amount must be greater than zero."
-        );
 
-    if (date === "")
-        throw new Error(
-            "Please select a date."
-        );
 
-}
 
 /**
- * Populates both category dropdowns.
- * Categories are generated recursively.
+ * Handles deleting expenses.
+ *
+ * Uses event delegation.
  */
-function populateCategories() {
+function handleDelete(event) {
 
-    const categorySelect =
-        document.querySelector("#category");
 
-    const filterSelect =
-        document.querySelector("#filterCategory");
 
-    const categories =
-        flattenCategories();
+    if (
 
-    categorySelect.innerHTML = "";
+        !event.target.classList.contains(
+            "delete-btn"
+        )
 
-    filterSelect.innerHTML =
-        `<option value="all">All Categories</option>`;
+    ) {
 
-    categories.forEach(category => {
 
-        categorySelect.innerHTML +=
-            `<option>${category}</option>`;
+        return;
 
-        filterSelect.innerHTML +=
-            `<option>${category}</option>`;
 
-    });
+    }
+
+
+
+    try {
+
+
+
+        const id =
+            Number(
+                event.target.dataset.id
+            );
+
+
+
+        expenseManager.deleteExpense(
+            id
+        );
+
+
+
+        refreshApplication();
+
+
+
+        showMessage(
+
+            "Expense deleted.",
+
+            "success"
+
+        );
+
+
+
+    }
+
+
+    catch(error) {
+
+
+
+        showMessage(
+
+            error.message,
+
+            "error"
+
+        );
+
+
+    }
+
+
 
 }
 
-// setExpenses(loadExpenses());
-// populateCategories();
 
-initializeChart();
 
-renderExpenses(handleDelete);
 
-updateSummary();
 
-updateChart(getExpenses());
+
+
+/**
+ * Handles filtering expenses.
+ */
+function handleFilter() {
+
+
+    const category =
+        document.querySelector("#filterCategory")
+            .value;
+
+
+
+    const filteredExpenses =
+        expenseManager.filterExpenses(
+            category
+        );
+
+
+
+    renderExpenses(
+        filteredExpenses
+    );
+
+
+}
+
+
+
+
+
+
+
+/**
+ * Handles sorting expenses.
+ */
+function handleSort() {
+
+
+    const sortType =
+        document.querySelector("#sortBy")
+            .value;
+
+
+
+    expenseManager.sortExpenses(
+        sortType
+    );
+
+
+
+    refreshApplication();
+
+
+}
+
+
+
+
+
+
+
+/**
+ * Connects event listeners.
+ */
+function setupEventListeners() {
+
+
+
+    const form =
+        document.querySelector("#expenseForm");
+
+
+
+    const table =
+        document.querySelector("#expenseTable");
+
+
+
+    const filter =
+        document.querySelector("#filterCategory");
+
+
+
+    const sort =
+        document.querySelector("#sortBy");
+
+
+
+
+
+    if(form) {
+
+
+        form.addEventListener(
+
+            "submit",
+
+            handleExpenseSubmit
+
+        );
+
+
+    }
+
+
+
+    if(table) {
+
+
+        table.addEventListener(
+
+            "click",
+
+            handleDelete
+
+        );
+
+
+    }
+
+
+
+
+    if(filter) {
+
+
+        filter.addEventListener(
+
+            "change",
+
+            handleFilter
+
+        );
+
+
+    }
+
+
+
+
+    if(sort) {
+
+
+        sort.addEventListener(
+
+            "change",
+
+            handleSort
+
+        );
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+/*
+    Start application after HTML loads.
+*/
+
+document.addEventListener(
+
+    "DOMContentLoaded",
+
+    initializeApp
+
+);

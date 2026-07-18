@@ -1,141 +1,472 @@
-// =======================================
-// ui.js
-// Handles updating the interface
-// =======================================
-
-import {
-    getExpenses,
-    getExpenseCount,
-    getLargestExpense,
-    getTotalAmount
-} from "./expenses.js";
+"use strict";
 
 /**
- * Draws all expenses.
+ * UI module
+ *
+ * Responsible only for updating and managing
+ * the visible interface.
+ *
+ * This module does NOT handle:
+ * - Local Storage
+ * - Expense creation logic
+ * - Chart calculations
+ *
+ * app.js controls communication between modules.
  */
-export function renderExpenses(deleteHandler) {
 
-    const table = document.querySelector("#expenseTable");
 
-    table.innerHTML = "";
+/**
+ * Renders the expense table.
+ *
+ * @param {Array} expenses
+ */
+export function renderExpenses(expenses) {
 
-    const expenses = getExpenses();
+    try {
 
-    if (expenses.length === 0) {
+        const tableBody = document.querySelector("#expenseTable");
 
-        table.innerHTML = `
-        <tr>
-            <td colspan="5" style="text-align:center">
-                No expenses added yet.
-            </td>
-        </tr>
+
+        if (!tableBody) {
+
+            throw new Error(
+                "Expense table element was not found."
+            );
+
+        }
+
+
+        // Clear existing rows.
+        tableBody.innerHTML = "";
+
+
+        // Display empty state.
+        if (expenses.length === 0) {
+
+            tableBody.innerHTML = `
+
+                <tr>
+
+                    <td colspan="5">
+
+                        No expenses recorded.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+            return;
+
+        }
+
+
+        /**
+         * Create a table row
+         * for every expense.
+         *
+         * Demonstrates map().
+         */
+        const rows = expenses.map(expense => {
+
+
+            return `
+
+                <tr>
+
+                    <td>
+                        ${formatDate(expense.date)}
+                    </td>
+
+                    <td>
+                        ${expense.title}
+                    </td>
+
+                    <td>
+                        ${expense.category}
+                    </td>
+
+                    <td>
+                        ${formatCurrency(expense.amount)}
+                    </td>
+
+                    <td>
+
+                        <button
+
+                            class="delete-btn"
+
+                            data-id="${expense.id}"
+
+                        >
+
+                            Delete
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+            `;
+
+
+        });
+
+
+        tableBody.innerHTML = rows.join("");
+
+
+    }
+
+    catch (error) {
+
+        showMessage(
+            error.message,
+            "error"
+        );
+
+    }
+
+}
+
+
+
+/**
+ * Updates the summary dashboard.
+ *
+ * @param {Object} expenseManager
+ */
+export function updateSummary(expenseManager) {
+
+
+    try {
+
+
+        const countElement =
+            document.querySelector("#expenseCount");
+
+
+        const totalElement =
+            document.querySelector("#totalAmount");
+
+
+        const largestElement =
+            document.querySelector("#largestExpense");
+
+
+
+        if (
+
+            !countElement ||
+            !totalElement ||
+            !largestElement
+
+        ) {
+
+            throw new Error(
+                "Summary elements were not found."
+            );
+
+        }
+
+
+
+        countElement.textContent =
+            expenseManager.getExpenseCount();
+
+
+
+        totalElement.textContent =
+            formatCurrency(
+                expenseManager.getTotalAmount()
+            );
+
+
+
+        largestElement.textContent =
+            formatCurrency(
+                expenseManager.getLargestExpense()
+            );
+
+
+    }
+
+    catch(error) {
+
+
+        showMessage(
+            error.message,
+            "error"
+        );
+
+
+    }
+
+
+}
+
+
+
+/**
+ * Populates category dropdown options.
+ *
+ * Used with categories generated
+ * from recursion.js.
+ *
+ * @param {Array} categories
+ */
+export function populateCategories(categories) {
+
+
+    try {
+
+
+        const categorySelect =
+            document.querySelector("#category");
+
+
+        const filterSelect =
+            document.querySelector("#filterCategory");
+
+
+
+        if (!categorySelect || !filterSelect) {
+
+            throw new Error(
+                "Category dropdown elements not found."
+            );
+
+        }
+
+
+
+        // Keep the filter default option.
+        filterSelect.innerHTML = `
+
+            <option value="all">
+
+                All Categories
+
+            </option>
+
         `;
+
+
+
+        categorySelect.innerHTML = "";
+
+
+
+        categories.forEach(category => {
+
+
+            const option =
+                document.createElement("option");
+
+
+            option.value = category;
+
+            option.textContent = category;
+
+
+            categorySelect.appendChild(option);
+
+
+
+            const filterOption =
+                document.createElement("option");
+
+
+            filterOption.value = category;
+
+            filterOption.textContent = category;
+
+
+            filterSelect.appendChild(filterOption);
+
+
+        });
+
+
+    }
+
+    catch(error) {
+
+
+        showMessage(
+            error.message,
+            "error"
+        );
+
+
+    }
+
+
+}
+
+
+
+/**
+ * Displays temporary messages.
+ *
+ * @param {string} message
+ * @param {string} type
+ */
+export function showMessage(message, type = "success") {
+
+
+    const messageBox =
+        document.querySelector("#messageBox");
+
+
+
+    if (!messageBox) {
 
         return;
 
     }
 
-    expenses.forEach(expense => {
 
-        const row = document.createElement("tr");
 
-        row.innerHTML = `
+    messageBox.textContent = message;
 
-            <td>${expense.date}</td>
 
-            <td>${expense.title}</td>
+    messageBox.className =
+        `message ${type}`;
 
-            <td>${expense.category}</td>
 
-            <td>$${expense.amount.toFixed(2)}</td>
 
-            <td>
+    messageBox.classList.remove(
+        "hidden"
+    );
 
-                <button
-                    class="delete-btn"
-                    data-id="${expense.id}">
 
-                    Delete
-
-                </button>
-
-            </td>
-
-        `;
-
-        table.appendChild(row);
-
-    });
-
-    document.querySelectorAll(".delete-btn")
-        .forEach(button => {
-
-            button.addEventListener("click", () => {
-
-                deleteHandler(Number(button.dataset.id));
-
-            });
-
-        });
-
-}
-
-/**
- * Updates summary cards.
- */
-export function updateSummary() {
-
-    document.querySelector("#expenseCount").textContent =
-        getExpenseCount();
-
-    document.querySelector("#totalAmount").textContent =
-        `$${getTotalAmount().toFixed(2)}`;
-
-    document.querySelector("#largestExpense").textContent =
-        `$${getLargestExpense().toFixed(2)}`;
-
-}
-
-/**
- * Clears the form.
- */
-export function clearForm() {
-
-    document.querySelector("#expenseForm").reset();
-
-}
-
-/**
- * Displays an error.
- */
-export function showError(message) {
-
-    const box = document.querySelector("#messageBox");
-
-    box.className = "message error";
-
-    box.textContent = message;
 
     setTimeout(() => {
 
-        box.className = "message hidden";
+
+        messageBox.classList.add(
+            "hidden"
+        );
+
 
     }, 3000);
 
+
+
 }
 
-export function showSuccess(message) {
 
-    const box = document.querySelector("#messageBox");
 
-    box.className = "message success";
+/**
+ * Clears the expense form.
+ */
+export function clearForm() {
 
-    box.textContent = message;
 
-    setTimeout(() => {
+    const form =
+        document.querySelector("#expenseForm");
 
-        box.className = "message hidden";
 
-    }, 2000);
+    if (form) {
+
+        form.reset();
+
+    }
+
+
+    // Set today's date again.
+    const dateInput =
+        document.querySelector("#date");
+
+
+    if (dateInput) {
+
+
+        dateInput.value =
+            new Date()
+                .toISOString()
+                .split("T")[0];
+
+    }
+
+
+}
+
+
+
+/**
+ * Formats currency values.
+ *
+ * @param {number} amount
+ *
+ * @returns {string}
+ */
+export function formatCurrency(amount) {
+
+
+    return new Intl.NumberFormat(
+
+        "en-US",
+
+        {
+
+            style: "currency",
+
+            currency: "USD"
+
+        }
+
+    ).format(amount);
+
+
+}
+
+
+
+/**
+ * Formats dates for display.
+ *
+ * @param {string} date
+ *
+ * @returns {string}
+ */
+export function formatDate(date) {
+
+
+    try {
+
+
+        return new Intl.DateTimeFormat(
+
+            "en-US",
+
+            {
+
+                year: "numeric",
+
+                month: "short",
+
+                day: "numeric"
+
+            }
+
+        ).format(
+            new Date(date)
+        );
+
+
+    }
+
+    catch(error) {
+
+
+        return date;
+
+
+    }
+
 
 }

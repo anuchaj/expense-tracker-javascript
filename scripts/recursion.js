@@ -1,34 +1,49 @@
-// ============================================
-// recursion.js
-//
-// Demonstrates recursion by walking through
-// the nested category tree.
-//
-// This satisfies the recursion requirement
-// for the JavaScript language module.
-// ============================================
+/**
+ * ==========================================================
+ * File: recursion.js
+ * Course: CSE 310 - Applied Programming
+ * Project: Personal Expense Tracker
+ *
+ * Description:
+ * Demonstrates recursion by traversing the nested category
+ * hierarchy and returning a flattened list of category names.
+ *
+ * This satisfies the recursion requirement for the
+ * JavaScript module.
+ * ==========================================================
+ */
 
-import { categories } from "./categories.js";
+"use strict";
+
+import { categoryTree } from "./categories.js";
 
 /**
- * Recursively walks the category tree
- * and returns a flat list of names.
+ * Recursively traverses the category hierarchy.
+ *
+ * Every category name encountered is added to the supplied
+ * results array.
  *
  * @param {Array} nodes
  * @param {Array} results
+ *
  * @returns {Array}
  */
 export function flattenCategories(
-    nodes = categories,
+    nodes = categoryTree,
     results = []
 ) {
 
     nodes.forEach(node => {
 
-        results.push(node.name);
+        // Skip the parent grouping names.
+        // Only leaf categories are used as expense categories.
+        if (!node.children) {
 
-        // If children exist,
-        // recursively visit them.
+            results.push(node.name);
+
+        }
+
+        // Visit child nodes recursively.
         if (node.children) {
 
             flattenCategories(
@@ -41,5 +56,51 @@ export function flattenCategories(
     });
 
     return results;
+
+}
+
+/**
+ * Searches recursively for a category.
+ *
+ * Demonstrates another practical use of recursion.
+ *
+ * @param {string} categoryName
+ * @param {Array} nodes
+ *
+ * @returns {boolean}
+ */
+export function categoryExists(
+    categoryName,
+    nodes = categoryTree
+) {
+
+    for (const node of nodes) {
+
+        if (node.name === categoryName) {
+
+            return true;
+
+        }
+
+        if (node.children) {
+
+            if (
+
+                categoryExists(
+                    categoryName,
+                    node.children
+                )
+
+            ) {
+
+                return true;
+
+            }
+
+        }
+
+    }
+
+    return false;
 
 }
